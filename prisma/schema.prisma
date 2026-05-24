@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  password      String?
+  createdAt     DateTime       @default(now())
+  savedColleges SavedCollege[]
+  reviews       Review[]
+}
+
+model College {
+  id            String         @id @default(cuid())
+  name          String
+  location      String
+  state         String
+  type          String         // Private / Public / Deemed
+  fees          Int            // Annual fees in INR
+  rating        Float          @default(0)
+  imageUrl      String?
+  website       String?
+  description   String?
+  established   Int?
+  courses       Course[]
+  placements    Placement[]
+  reviews       Review[]
+  savedBy       SavedCollege[]
+  createdAt     DateTime       @default(now())
+}
+
+model Course {
+  id         String   @id @default(cuid())
+  name       String
+  duration   Int      // in years
+  fees       Int
+  seats      Int?
+  collegeId  String
+  college    College  @relation(fields: [collegeId], references: [id])
+}
+
+model Placement {
+  id              String   @id @default(cuid())
+  year            Int
+  averagePackage  Int      // in LPA
+  highestPackage  Int
+  placementRate   Float    // percentage
+  collegeId       String
+  college         College  @relation(fields: [collegeId], references: [id])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  rating     Float
+  content    String
+  userId     String
+  collegeId  String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  college    College  @relation(fields: [collegeId], references: [id])
+}
+
+model SavedCollege {
+  id        String   @id @default(cuid())
+  userId    String
+  collegeId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  college   College  @relation(fields: [collegeId], references: [id])
+
+  @@unique([userId, collegeId])
+}
