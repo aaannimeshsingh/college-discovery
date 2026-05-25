@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -25,7 +25,7 @@ interface AllCollege {
   location: string;
 }
 
-export default function ComparePage() {
+function CompareContent() {
   const searchParams = useSearchParams();
   const initialId = searchParams.get("colleges") || "";
 
@@ -66,6 +66,69 @@ export default function ComparePage() {
   ];
 
   return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <h2 className="font-semibold text-gray-800 mb-4">Select Colleges ({selectedIds.length}/3)</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+          {allColleges.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => toggleCollege(c.id)}
+              className={`text-left p-3 rounded-lg border text-sm transition ${
+                selectedIds.includes(c.id)
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 hover:border-gray-300 text-gray-700"
+              }`}
+            >
+              <p className="font-medium leading-tight">{c.name}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{c.location}</p>
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={compare}
+          disabled={selectedIds.length < 2 || loading}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40 transition"
+        >
+          {loading ? "Comparing..." : "Compare Now"}
+        </button>
+      </div>
+
+      {compared.length >= 2 && (
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-4 text-gray-500 font-medium text-sm w-40">Feature</th>
+                {compared.map((c) => (
+                  <th key={c.id} className="p-4 text-center">
+                    <p className="font-bold text-gray-900 text-base">{c.name}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${c.type === "Public" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"}`}>{c.type}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={row.label} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                  <td className="p-4 text-sm font-medium text-gray-500">{row.label}</td>
+                  {compared.map((c) => (
+                    <td key={c.id} className="p-4 text-center text-sm font-semibold text-gray-800">
+                      {row.getValue(c)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ComparePage() {
+  return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b">
         <div className="max-w-6xl mx-auto px-4 py-6">
@@ -74,67 +137,9 @@ export default function ComparePage() {
           <p className="text-gray-500 mt-1">Select 2–3 colleges to compare side by side</p>
         </div>
       </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* College Selector */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="font-semibold text-gray-800 mb-4">Select Colleges ({selectedIds.length}/3)</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-            {allColleges.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => toggleCollege(c.id)}
-                className={`text-left p-3 rounded-lg border text-sm transition ${
-                  selectedIds.includes(c.id)
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-gray-200 hover:border-gray-300 text-gray-700"
-                }`}
-              >
-                <p className="font-medium leading-tight">{c.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{c.location}</p>
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={compare}
-            disabled={selectedIds.length < 2 || loading}
-            className="bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-40 transition"
-          >
-            {loading ? "Comparing..." : "Compare Now"}
-          </button>
-        </div>
-
-        {/* Comparison Table */}
-        {compared.length >= 2 && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-4 text-gray-500 font-medium text-sm w-40">Feature</th>
-                  {compared.map((c) => (
-                    <th key={c.id} className="p-4 text-center">
-                      <p className="font-bold text-gray-900 text-base">{c.name}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${c.type === "Public" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"}`}>{c.type}</span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr key={row.label} className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                    <td className="p-4 text-sm font-medium text-gray-500">{row.label}</td>
-                    {compared.map((c) => (
-                      <td key={c.id} className="p-4 text-center text-sm font-semibold text-gray-800">
-                        {row.getValue(c)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <Suspense fallback={<div className="text-center py-20 text-gray-400">Loading...</div>}>
+        <CompareContent />
+      </Suspense>
     </div>
   );
 }
